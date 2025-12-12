@@ -92,7 +92,12 @@ if (playerY > height + 60) {
   for (let p of platforms) {
     rect(p.x, p.y, p.w, p.h, 6);
   }
-
+// recycle platforms that went off screen
+for (let p of platforms) {
+  if (p.y > height + p.h) {
+    respawnPlatform(p);
+  }
+}
   // draw player
   fill(0, 200, 0);
   ellipse(playerX, playerY, 40, 40);
@@ -101,3 +106,8 @@ fill(0);
 textSize(16);
 textAlign(LEFT);
 text("Score: " + score, 10, 20);
+function respawnPlatform(p) {
+  p.y = -random(20, 120);          // place above screen
+  p.x = random(40, width - 40);    // new random x
+}
+
