@@ -1,9 +1,8 @@
 let playerX, playerY;
 let velocityY = 0;
 let gravity = 0.6;
-
 let platforms = [];
-
+let score = 0;
 function setup() {
   createCanvas(400, 600);
 
@@ -52,8 +51,18 @@ function draw() {
   // gravity
   velocityY += gravity;
   playerY += velocityY;
+  // camera scroll
+if (playerY < height / 2 && velocityY < 0) {
+  let diff = height / 2 - playerY;
+  playerY = height / 2;
 
-  // PLATFORM COLLISION (AUTO JUMP)
+  for (let p of platforms) {
+    p.y += diff;
+  }
+
+  score += Math.floor(diff);
+}
+// PLATFORM COLLISION (AUTO JUMP)
   for (let p of platforms) {
     let platformTop = p.y - p.h / 2;
     let playerBottom = playerY + 20;
@@ -88,3 +97,7 @@ if (playerY > height + 60) {
   fill(0, 200, 0);
   ellipse(playerX, playerY, 40, 40);
 }
+fill(0);
+textSize(16);
+textAlign(LEFT);
+text("Score: " + score, 10, 20);
