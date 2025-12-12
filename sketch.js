@@ -20,7 +20,24 @@ function setup() {
     });
   }
 }
-
+function restartGame() {
+  // reset player
+  playerX = width / 2;
+  playerY = height - 80;
+  velocityY = 0;
+// reset platforms (fresh level)
+  platforms = [];
+  for (let i = 0; i < 7; i++) {
+    platforms.push({
+      x: random(50, width - 50),
+      y: height - i * 90,
+      w: 80,
+      h: 12
+    });
+  }
+ // optional: reset score if you have one
+  // score = 0;
+}
 function draw() {
   background(220);
 
@@ -54,6 +71,10 @@ if (playerY > height + 60) {
   playerX = width / 2;
   playerY = height - 80;
   velocityY = 0;
+}
+  // RESTART if you fall below the screen
+if (playerY > height + 60) {
+  restartGame();
 }
   // draw platforms
   rectMode(CENTER);
