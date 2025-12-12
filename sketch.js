@@ -46,10 +46,15 @@ function draw() {
     let insideX = playerX >= p.x - p.w / 2 && playerX <= p.x + p.w / 2;
 
     if (velocityY > 0 && onTop && insideX) {
-      velocityY = -12;
+      velocityY = -20; // very high jump
     }
   }
-
+  // if you fall below screen, reset position (simple restart)
+if (playerY > height + 60) {
+  playerX = width / 2;
+  playerY = height - 80;
+  velocityY = 0;
+}
   // draw platforms
   rectMode(CENTER);
   fill(60, 160, 255);
