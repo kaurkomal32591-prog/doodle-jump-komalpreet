@@ -72,7 +72,7 @@ if (playerY < height / 2 && velocityY < 0) {
     let insideX = playerX >= p.x - p.w / 2 && playerX <= p.x + p.w / 2;
 
     if (velocityY > 0 && onTop && insideX) {
-      velocityY = -20; // very high jump
+      velocityY = -18; // high jump
     }
   }
   // if you fall below screen, reset position (simple restart)
@@ -84,6 +84,12 @@ if (playerY > height + 60) {
   // RESTART if you fall below the screen
 if (playerY > height + 60) {
   restartGame();
+}
+  // recycle platforms that went off screen
+for (let p of platforms) {
+  if (p.y > height + p.h) {
+    respawnPlatform(p);
+  }
 }
   // draw platforms
   rectMode(CENTER);
