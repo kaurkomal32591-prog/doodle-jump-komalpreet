@@ -42,7 +42,7 @@ function draw() {
     let playerBottom = playerY + 20;
     let prevBottom = (playerY - velocityY) + 20;
 
-    let onTop = prevBottom <= platformTop && playerBottom >= platformTop;
+    let onTop = prevBottom <= platformTop && playerBottom >= platformTop - 8;
     let insideX = playerX >= p.x - p.w / 2 && playerX <= p.x + p.w / 2;
 
     if (velocityY > 0 && onTop && insideX) {
