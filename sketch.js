@@ -1,119 +1,165 @@
-let playerX, playerY;
-let velocityY = 0;
-let gravity = 0.6;
+let player;
 let platforms = [];
 let score = 0;
+let gameOver = false;
+
+// ===== SETUP =====
 function setup() {
   createCanvas(400, 600);
-
-  playerX = width / 2;
-  playerY = height - 80;
-
-  // create platforms
-  for (let i = 0; i < 8; i++) {
-    platforms.push({
-      x: random(60, width - 60),
-      y: height - i * 80,
-      w: 80,
-      h: 12
-    });
-  }
+  restartGame();
 }
-function restartGame() {
-  // reset player
-  playerX = width / 2;
-  playerY = height - 80;
-  velocityY = 0;
-// reset platforms (fresh level)
-  platforms = [];
-  for (let i = 0; i < 7; i++) {
-    platforms.push({
-      x: random(50, width - 50),
-      y: height - i * 90,
-      w: 80,
-      h: 12
-    });
-  }
- // optional: reset score if you have one
-  // score = 0;
-}
+
+// ===== DRAW =====
 function draw() {
   background(220);
 
-  // LEFT / RIGHT movement
-  if (keyIsDown(LEFT_ARROW)) playerX -= 5;
-  if (keyIsDown(RIGHT_ARROW)) playerX += 5;
-
-  // wrap screen
-  if (playerX < -20) playerX = width + 20;
-  if (playerX > width + 20) playerX = -20;
-
-  // gravity
-  velocityY += gravity;
-  playerY += velocityY;
-  // camera scroll
-if (playerY < height / 2 && velocityY < 0) {
-  let diff = height / 2 - playerY;
-  playerY = height / 2;
-
-  for (let p of platforms) {
-    p.y += diff;
+  // GAME OVER SCREEN
+  if (gameOver) {
+    fill(0);
+    textAlign(CENTER, CENTER);
+    textSize(32);
+    text("GAME OVER", width / 2, height / 2);
+    textSize(16);
+    text("Press R to restart", width / 2, height / 2 + 40);
+    return;
   }
 
-  score += Math.floor(diff);
-}
-// PLATFORM COLLISION (AUTO JUMP)
+  // LEFT / RIGHT MOVEMENT
+  if (keyIsDown(LEFT_ARROW)) player.x -= 4;
+  if (keyIsDown(RIGHT_ARROW)) player.x += 4;
+
+  // WRAP SCREEN
+  if (player.x < -player.r) player.x = width + player.r;
+  if (player.x > width + player.r) player.x = -player.r;
+
+  // UPDATE PLAYER
+  player.update();
+
+  // PLATFORM COLLISION
   for (let p of platforms) {
-    let platformTop = p.y - p.h / 2;
-    let playerBottom = playerY + 20;
-    let prevBottom = (playerY - velocityY) + 20;
-
-    let onTop = prevBottom <= platformTop && playerBottom >= platformTop - 8;
-    let insideX = playerX >= p.x - p.w / 2 && playerX <= p.x + p.w / 2;
-
-    if (velocityY > 0 && onTop && insideX) {
-      velocityY = -18; // high jump
+    if (p.checkLanding(player)) {
+      player.jump();
     }
   }
-  // if you fall below screen, reset position (simple restart)
-if (playerY > height + 60) {
-  playerX = width / 2;
-  playerY = height - 80;
-  velocityY = 0;
-}
-  // RESTART if you fall below the screen
-if (playerY > height + 60) {
-  restartGame();
-}
-  // recycle platforms that went off screen
-for (let p of platforms) {
-  if (p.y > height + p.h) {
-    respawnPlatform(p);
+
+  // CAMERA SCROLL
+  if (player.y < height / 2 && player.vy < 0) {
+    let diff = height / 2 - player.y;
+    player.y = height / 2;
+
+    for (let p of platforms) {
+      p.y += diff;
+    }
+    score += Math.floor(diff);
   }
-}
-  // draw platforms
-  rectMode(CENTER);
-  fill(60, 160, 255);
-  noStroke();
+
+  // RECYCLE PLATFORMS
   for (let p of platforms) {
-    rect(p.x, p.y, p.w, p.h, 6);
+    if (p.y > height + p.h) {
+      p.y = -random(50, 150);
+      p.x = random(40, width - 40);
+    }
   }
-// recycle platforms that went off screen
-for (let p of platforms) {
-  if (p.y > height + p.h) {
-    respawnPlatform(p);
+
+  // FALL = GAME OVER
+  if (player.y > height + 60) {
+    gameOver = true;
+  }
+
+  // DRAW PLATFORMS
+  for (let p of platforms) {
+    p.draw();
+  }
+
+  // DRAW PLAYER
+  player.draw();
+
+  // SCORE
+  fill(0);
+  textSize(16);
+  textAlign(LEFT);
+  text("Score: " + score, 10, 20);
+}
+
+// ===== RESTART =====
+function restartGame() {
+  score = 0;
+  gameOver = false;
+
+  player = new Player(width / 2, height - 80);
+
+  platforms = [];
+  for (let i = 0; i < 8; i++) {
+    platforms.push(new Platform(random(40, width - 40), height - i * 80));
+  }
+
+  platforms[0].x = width / 2;
+  platforms[0].y = height - 40;
+}
+
+// ===== KEY PRESS =====
+function keyPressed() {
+  if ((key === 'r' || key === 'R') && gameOver) {
+    restartGame();
   }
 }
-  // draw player
-  fill(0, 200, 0);
-  ellipse(playerX, playerY, 40, 40);
+
+// ===== PLAYER CLASS =====
+class Player {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.r = 20;
+    this.vy = 0;
+    this.gravity = 0.6;
+    this.jumpPower = -18;
+  }
+
+  update() {
+    this.vy += this.gravity;
+    this.y += this.vy;
+  }
+
+  jump() {
+    this.vy = this.jumpPower;
+  }
+
+  draw() {
+    fill(0, 200, 0);
+    noStroke();
+    ellipse(this.x, this.y, this.r * 2);
+  }
 }
-fill(0);
-textSize(16);
-textAlign(LEFT);
-text("Score: " + score, 10, 20);
-function respawnPlatform(p) {
-  p.y = -random(20, 120);          // place above screen
-  p.x = random(40, width - 40);    // new random x
+
+// ===== PLATFORM CLASS =====
+class Platform {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.w = 80;
+    this.h = 12;
+  }
+
+  draw() {
+    fill(60, 160, 255);
+    noStroke();
+    rectMode(CENTER);
+    rect(this.x, this.y, this.w, this.h, 6);
+  }
+
+  checkLanding(player) {
+    if (player.vy <= 0) return false;
+
+    let playerBottom = player.y + player.r;
+    let prevBottom = (player.y - player.vy) + player.r;
+    let platformTop = this.y - this.h / 2;
+
+    let crossed = prevBottom <= platformTop && playerBottom >= platformTop - 6;
+    let insideX =
+      player.x >= this.x - this.w / 2 &&
+      player.x <= this.x + this.w / 2;
+
+    return crossed && insideX;
+  }
 }
 
