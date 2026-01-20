@@ -3,17 +3,14 @@ let platforms = [];
 let score = 0;
 let gameOver = false;
 
-// ===== SETUP =====
 function setup() {
   createCanvas(400, 600);
   restartGame();
 }
 
-// ===== DRAW =====
 function draw() {
   background(220);
 
-  // GAME OVER SCREEN
   if (gameOver) {
     fill(0);
     textAlign(CENTER, CENTER);
@@ -23,26 +20,17 @@ function draw() {
     text("Press R to restart", width / 2, height / 2 + 40);
     return;
   }
+if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) player.x -= 4;   // A
+if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.x += 4;  // D
 
-  // LEFT / RIGHT MOVEMENT
-  if (keyIsDown(LEFT_ARROW)) player.x -= 4;
-  if (keyIsDown(RIGHT_ARROW)) player.x += 4;
-
-  // WRAP SCREEN
   if (player.x < -player.r) player.x = width + player.r;
   if (player.x > width + player.r) player.x = -player.r;
-
-  // UPDATE PLAYER
   player.update();
-
-  // PLATFORM COLLISION
   for (let p of platforms) {
     if (p.checkLanding(player)) {
       player.jump();
     }
   }
-
-  // CAMERA SCROLL
   if (player.y < height / 2 && player.vy < 0) {
     let diff = height / 2 - player.y;
     player.y = height / 2;
@@ -52,36 +40,32 @@ function draw() {
     }
     score += Math.floor(diff);
   }
-
-  // RECYCLE PLATFORMS
   for (let p of platforms) {
     if (p.y > height + p.h) {
-      p.y = -random(50, 150);
+      p.y = -random(50, 150);{
       p.x = random(40, width - 40);
+      p.breakable = random() < 0.3;
+      p.broken = false;
+      p.breakTimer = 0;
     }
   }
-
-  // FALL = GAME OVER
   if (player.y > height + 60) {
     gameOver = true;
   }
-
-  // DRAW PLATFORMS
-  for (let p of platforms) {
+  for (let p of platforms) 
+    if (p.breakTimer > 0) {
+      p.breakTimer--;
+      if (p.breakTimer === 0) this.broken = true;
+ }
     p.draw();
   }
-
-  // DRAW PLAYER
   player.draw();
-
-  // SCORE
   fill(0);
   textSize(16);
   textAlign(LEFT);
   text("Score: " + score, 10, 20);
 }
 
-// ===== RESTART =====
 function restartGame() {
   score = 0;
   gameOver = false;
@@ -96,15 +80,11 @@ function restartGame() {
   platforms[0].x = width / 2;
   platforms[0].y = height - 40;
 }
-
-// ===== KEY PRESS =====
 function keyPressed() {
   if ((key === 'r' || key === 'R') && gameOver) {
     restartGame();
   }
 }
-
-// ===== PLAYER CLASS =====
 class Player {
   constructor(x, y) {
     this.x = x;
@@ -114,40 +94,43 @@ class Player {
     this.gravity = 0.6;
     this.jumpPower = -18;
   }
-
-  update() {
+ update() {
     this.vy += this.gravity;
     this.y += this.vy;
   }
-
-  jump() {
+jump() {
     this.vy = this.jumpPower;
   }
-
-  draw() {
+draw() {
     fill(0, 200, 0);
     noStroke();
     ellipse(this.x, this.y, this.r * 2);
   }
 }
-
-// ===== PLATFORM CLASS =====
 class Platform {
   constructor(x, y) {
     this.x = x;
     this.y = y;
     this.w = 80;
     this.h = 12;
+    this.breakable = random() < 0.3;
+    this.broken = false;
+    this.breakTimer = 0;
   }
 
   draw() {
-    fill(60, 160, 255);
+    if (this.broken) return;
+
     noStroke();
     rectMode(CENTER);
+    if (this.breakable) fill(255, 90, 90);
+    else fill(60, 160, 255);
+
     rect(this.x, this.y, this.w, this.h, 6);
   }
 
   checkLanding(player) {
+    if (this.broken) return false;
     if (player.vy <= 0) return false;
 
     let playerBottom = player.y + player.r;
@@ -159,7 +142,14 @@ class Platform {
       player.x >= this.x - this.w / 2 &&
       player.x <= this.x + this.w / 2;
 
-    return crossed && insideX;
+    if (crossed && insideX) {
+      if (this.breakable && this.breakTimer === 0) {
+        this.broken = true;
+      }
+      return true;
+    }
+
+    return false;
   }
 }
 
