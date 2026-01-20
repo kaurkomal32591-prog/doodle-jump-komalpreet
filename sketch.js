@@ -152,4 +152,3 @@ class Platform {
     return false;
   }
 }
-
