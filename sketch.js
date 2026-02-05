@@ -26,11 +26,14 @@ if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.x += 4;  // D
   if (player.x < -player.r) player.x = width + player.r;
   if (player.x > width + player.r) player.x = -player.r;
   player.update();
+
   for (let p of platforms) {
+    p.move(); 
     if (p.checkLanding(player)) {
       player.jump();
     }
   }
+
   if (player.y < height / 2 && player.vy < 0) {
     let diff = height / 2 - player.y;
     player.y = height / 2;
@@ -40,6 +43,7 @@ if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.x += 4;  // D
     }
     score += Math.floor(diff);
   }
+
   for (let p of platforms) {
     if (p.y > height + p.h) {
       p.y = -random(50, 150);{
@@ -47,11 +51,16 @@ if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.x += 4;  // D
       p.breakable = random() < 0.3;
       p.broken = false;
       p.breakTimer = 0;
+
+
+     p.dir = random() < 0.5 ? -1 : 1;
     }
   }
+
   if (player.y > height + 60) {
     gameOver = true;
   }
+
   for (let p of platforms) 
     if (p.breakTimer > 0) {
       p.breakTimer--;
@@ -59,6 +68,7 @@ if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.x += 4;  // D
  }
     p.draw();
   }
+
   player.draw();
   fill(0);
   textSize(16);
@@ -77,14 +87,25 @@ function restartGame() {
     platforms.push(new Platform(random(40, width - 40), height - i * 80));
   }
 
+  
+  let yLine = height - 300;
+  for (let i = 0; i < 4; i++) {
+    let mp = new Platform(60 + i * 90, yLine);
+    mp.movable = true;
+    mp.speed = 2;
+    platforms.push(mp);
+  }
+
   platforms[0].x = width / 2;
   platforms[0].y = height - 40;
 }
+
 function keyPressed() {
   if ((key === 'r' || key === 'R') && gameOver) {
     restartGame();
   }
 }
+
 class Player {
   constructor(x, y) {
     this.x = x;
@@ -107,6 +128,7 @@ draw() {
     ellipse(this.x, this.y, this.r * 2);
   }
 }
+
 class Platform {
   constructor(x, y) {
     this.x = x;
@@ -116,6 +138,23 @@ class Platform {
     this.breakable = random() < 0.3;
     this.broken = false;
     this.breakTimer = 0;
+
+    
+    this.movable = false;
+    this.speed = 0;
+    this.dir = random() < 0.5 ? -1 : 1;
+  }
+
+  
+  move() {
+    if (this.broken) return;
+    if (!this.movable) return;
+
+    this.x += this.speed * this.dir;
+
+  
+    if (this.x < 40) this.dir = 1;
+    if (this.x > width - 40) this.dir = -1;
   }
 
   draw() {
